@@ -1,0 +1,15 @@
+
+
+type LoginResponse {
+    accessToken: String!
+    refreshToken: String!
+}
+
+
+extend type Query {
+    me: User
+}
+
+extend type Mutation {
+    register(input: RegisterUserInput!): User
+}

@@ -1,0 +1,32 @@
+# Global ignore para o monorepo
+
+# Node / Frontend
+node_modules/
+.next/
+out/
+dist/
+.env.local
+.env.production
+.env.development
+*.log
+
+# Go / Backend
+bin/
+build/
+vendor/
+*.exe
+*.out
+*.test
+*.env
+
+# Docker
+*.pid
+*.tmp
+*.lock
+
+# Editor / SO
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
