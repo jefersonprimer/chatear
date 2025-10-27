@@ -1,53 +1,26 @@
-/* app/globals.css */
+@import "tailwindcss";
 
-/* Tailwind directives */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
 
-/* Reset e estilos globais usando classes */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
 body {
-  width: 100%;
-  max-width: 1440px; /* limite máximo */
-  min-height: 100vh;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05); /* leve sombra para destacar */
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Inter', sans-serif;
-  background-color: #F8F9FB;
-  color: #000000;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
 }
-
-a {
-  color: #3b82f6; /* azul */
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: underline;
-}
-
-img {
-  max-width: 100%;
-  height: auto;
-}
-
-button {
-  cursor: pointer;
-}
-
-/* Scrollbar opcional */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: #9ca3af; /* gray-400 */
-  border-radius: 9999px;
-}
-
-::-webkit-scrollbar-track {
-  background-color: #e5e7eb; /* gray-200 */
-}
-

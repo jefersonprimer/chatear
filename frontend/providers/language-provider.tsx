@@ -7,11 +7,9 @@ import {
   useEffect,
   useCallback,
 } from 'react';
-import i18next, { i18n as i18nInstance } from 'i18next';
+import i18n from '../lib/i18n';
 import { I18nextProvider } from 'react-i18next';
-import { usePathname, useRouter } from 'next/navigation';
-import initTranslations from '../lib/i18n/i18n';
-import i18nConfig from '../lib/i18n/i18n.config';
+import { useRouter } from 'next/navigation';
 
 interface LanguageContextType {
   language: string;
@@ -28,15 +26,14 @@ interface LanguageProviderProps {
 }
 
 export function LanguageProvider({ children, locale }: LanguageProviderProps) {
-  const [i18n, setI18n] = useState<i18nInstance | null>(null);
   const [language, setLanguage] = useState(locale);
   const router = useRouter();
-  const pathname = usePathname();
 
   const changeLanguage = useCallback(
     (newLanguage: string) => {
-      if (i18nConfig.locales.includes(newLanguage) && newLanguage !== language) {
+      if (['en', 'pt'].includes(newLanguage) && newLanguage !== language) {
         setLanguage(newLanguage);
+        i18n.changeLanguage(newLanguage);
         document.cookie = `i18next=${newLanguage};path=/`;
         router.refresh();
       }
@@ -45,19 +42,10 @@ export function LanguageProvider({ children, locale }: LanguageProviderProps) {
   );
 
   useEffect(() => {
-    const init = async () => {
-      const newInstance = await initTranslations(language, i18nConfig.ns);
-      setI18n(newInstance);
-    };
-
-    if (!i18n || language !== i18n.language) {
-      init();
+    if (i18n.language !== language) {
+      i18n.changeLanguage(language);
     }
-  }, [language, i18n]);
-
-  if (!i18n) {
-    return null;
-  }
+  }, [language]);
 
   return (
     <LanguageContext.Provider value={{ language, changeLanguage }}>

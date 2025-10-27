@@ -1,5 +1,5 @@
 {
-  "name": "chatear-frontend",
+  "name": "frontend",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,21 +10,19 @@
     "codegen": "graphql-codegen --config codegen.ts"
   },
   "dependencies": {
-    "@apollo/client": "^3.10.4",
+    "@apollo/client": "^4.0.7",
     "accept-language": "^3.0.20",
+    "framer-motion": "^12.23.24",
     "graphql": "^16.11.0",
     "i18next": "^25.6.0",
     "i18next-browser-languagedetector": "^8.2.0",
     "i18next-resources-to-backend": "^1.2.1",
     "next": "16.0.0",
-    "next-i18next": "^15.4.2",
     "react": "19.2.0",
     "react-dom": "19.2.0",
-    "react-i18next": "^16.1.5"
+    "react-i18next": "^16.2.1"
   },
   "devDependencies": {
-    "@graphql-codegen/cli": "6.0.1",
-    "@graphql-codegen/client-preset": "5.1.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

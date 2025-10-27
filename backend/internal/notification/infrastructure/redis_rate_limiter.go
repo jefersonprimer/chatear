@@ -1,4 +1,3 @@
-
 package infrastructure
 
 import (
@@ -6,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-redis/redis/v9"
+	"github.com/redis/go-redis/v9"
 	"github.com/jefersonprimer/chatear/backend/config"
 )
 
@@ -22,6 +21,7 @@ func NewRedisRateLimiter(client *redis.Client, cfg *config.Config) *RedisRateLim
 	}
 }
 
+// Get retorna a contagem atual de ações no rate limit
 func (r *RedisRateLimiter) Get(ctx context.Context, key string) (int, error) {
 	key = fmt.Sprintf("rate_limit:%s", key)
 	count, err := r.client.ZCard(ctx, key).Result()
@@ -31,23 +31,24 @@ func (r *RedisRateLimiter) Get(ctx context.Context, key string) (int, error) {
 	return int(count), nil
 }
 
+// Increment adiciona uma entrada e remove antigas, controlando o rate limit
 func (r *RedisRateLimiter) Increment(ctx context.Context, key string) error {
 	key = fmt.Sprintf("rate_limit:%s", key)
 	now := time.Now().UnixNano()
 
 	pipe := r.client.TxPipeline()
 
-	// Remove old entries
-	maxAge := now - int64(24*time.Hour) // 24 hours window
+	// Remove entradas antigas (janela de 24h)
+	maxAge := now - int64(24*time.Hour)
 	pipe.ZRemRangeByScore(ctx, key, "-inf", fmt.Sprintf("%d", maxAge))
 
-	// Add new entry
-	pipe.ZAdd(ctx, key, &redis.Z{
+	// Adiciona nova entrada
+	pipe.ZAdd(ctx, key, redis.Z{
 		Score:  float64(now),
 		Member: now,
 	})
 
-	// Set expiry for the key
+	// Define tempo de expiração para a chave
 	pipe.Expire(ctx, key, 24*time.Hour)
 
 	_, err := pipe.Exec(ctx)
@@ -57,6 +58,7 @@ func (r *RedisRateLimiter) Increment(ctx context.Context, key string) error {
 	return nil
 }
 
+// IsAllowed verifica se a ação é permitida segundo o limite configurado
 func (r *RedisRateLimiter) IsAllowed(ctx context.Context, key string) (bool, error) {
 	if !r.cfg.RateLimitEnabled {
 		return true, nil
@@ -69,3 +71,4 @@ func (r *RedisRateLimiter) IsAllowed(ctx context.Context, key string) (bool, err
 
 	return count < r.cfg.MaxEmailsPerDay, nil
 }
+
