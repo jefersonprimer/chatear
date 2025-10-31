@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -12,16 +13,17 @@ import (
 	"github.com/jefersonprimer/chatear/backend/domain/repositories"
 	"github.com/jefersonprimer/chatear/backend/domain/services"
 	notificationApplication "github.com/jefersonprimer/chatear/backend/internal/notification/application"
+	"github.com/jefersonprimer/chatear/backend/pkg/validator"
 	"github.com/jefersonprimer/chatear/backend/shared/errors"
 	"github.com/jefersonprimer/chatear/backend/shared/events"
 )
 
 // RegisterUserRequest represents the request to register a new user.
 type RegisterUserRequest struct {
-	Name     string
-	Email    string
-	Password string
-	Gender   string
+	Name     string `json:"name" validate:"required,min=2,max=50"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8"`
+	Gender   string `json:"gender" validate:"required,oneof=MALE FEMALE"`
 }
 
 // RegisterUserResponse represents the response after registering a new user.
@@ -35,6 +37,7 @@ type RegisterUser struct {
 	EventBus            repositories.EventBus
 	OneTimeTokenService services.OneTimeTokenService
 	EmailRateLimiter    notificationApplication.RateLimiter
+	Validator           *validator.Validator
 }
 
 // NewRegisterUser creates a new RegisterUser use case.
@@ -43,17 +46,26 @@ func NewRegisterUser(
 	eventBus repositories.EventBus,
 	oneTimeTokenService services.OneTimeTokenService,
 	emailRateLimiter notificationApplication.RateLimiter,
+	validator *validator.Validator,
 ) *RegisterUser {
 	return &RegisterUser{
 		UserRepository:      userRepo,
 		EventBus:            eventBus,
 		OneTimeTokenService: oneTimeTokenService,
 		EmailRateLimiter:    emailRateLimiter,
+		Validator:           validator,
 	}
 }
 
 // Execute handles the registration of a new user.
 func (uc *RegisterUser) Execute(ctx context.Context, req RegisterUserRequest) (*RegisterUserResponse, error) {
+	if err := uc.Validator.Validate(req); err != nil {
+		return nil, fmt.Errorf("invalid input: %v", err)
+	}
+
+	req.Name = strings.TrimSpace(req.Name)
+	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
+
 	// Check if user with the given email already exists
 	existingUser, err := uc.UserRepository.FindByEmail(ctx, req.Email)
 	if err != nil && err != pgx.ErrNoRows {

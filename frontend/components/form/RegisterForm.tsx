@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useMutation } from "@apollo/client/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -23,7 +23,43 @@ export default function RegisterForm() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [uploadLoading, setUploadLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [nameError, setNameError] = useState("");
   const imgRef = useRef<HTMLImageElement>(null);
+
+  const nameRegex = /^[A-Za-zÀ-ÿ\s'-]{2,50}$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$/;
+
+  const validateName = (name: string) => nameRegex.test(name.trim());
+  const validateEmail = (email: string) => emailRegex.test(email.trim());
+  const validatePassword = (password: string) => passwordRegex.test(password);
+
+
+  useEffect(() => {
+    if (name && !validateName(name)) {
+      setNameError("Invalid name. Use only letters and spaces.");
+    } else {
+      setNameError("");
+    }
+  }, [name]);
+
+  useEffect(() => {
+    if (email && !validateEmail(email)) {
+      setEmailError("Digite um email válido (ex: nome@dominio.com)");
+    } else {
+      setEmailError("");
+    }
+  }, [email]);
+
+  useEffect(() => {
+    if (password && !validatePassword(password)) {
+      setPasswordError("Password must contain upper, lower, number and special character.");
+    } else {
+      setPasswordError("");
+    }
+  }, [password]);
 
   function onImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
     const { width, height } = e.currentTarget;
@@ -123,9 +159,26 @@ export default function RegisterForm() {
     e.preventDefault();
     setError("");
 
+    const sanitizedName = name.trim();
+    const sanitizedEmail = email.trim().toLowerCase();
+    const sanitizedPassword = password.trim();
+
+    if (!validateName(sanitizedName)) {
+      setNameError("Invalid name. Use only letters and spaces.");
+      return;
+    }
+    if (!validateEmail(sanitizedEmail)) {
+      setEmailError("Invalid email format.");
+      return;
+    }
+    if (!validatePassword(sanitizedPassword)) {
+      setPasswordError("Password must contain upper, lower, number and special character.");
+      return;
+    }
+
     try {
       const { data: registerData } = await registerUser({
-        variables: { input: { name, email, password, gender } },
+        variables: { input: { name: sanitizedName, email: sanitizedEmail, password: sanitizedPassword, gender } },
       });
 
       if (registerData.registerUser && avatar) {
@@ -154,7 +207,7 @@ export default function RegisterForm() {
     }
   };
 
-  const isFormValid = name && email && password && gender && termsAccepted;
+  const isFormValid = name && email && password && gender && termsAccepted && !nameError && !emailError && !passwordError;
 
   return (
     <div className="w-full max-w-md p-8 space-y-6 bg-[#FFFFFF] rounded-lg shadow-md">
@@ -219,11 +272,15 @@ export default function RegisterForm() {
             name="name"
             type="text"
             autoComplete="name"
+            maxLength="50"
+            title="Use apenas letras, espaços e acentos válidos."
             required
+            placeholder="Jão Silva"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="block w-full px-3 py-2 mt-1 text-[#595959] font-medium placeholder-[#858787] border border-[#858787] rounded-[4px] shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-[#0B57D0] focus:border-2 text-base"
           />
+          {nameError && <p className="mt-2 text-sm text-red-500">{nameError}</p>}
         </div>
         <div>
           <label
@@ -237,11 +294,20 @@ export default function RegisterForm() {
             name="email"
             type="email"
             autoComplete="email"
+            maxLength="50"
             required
+            placeholder="nome@dominio.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="block w-full px-3 py-2 mt-1 text-[#595959] font-medium placeholder-[#858787] border border-[#858787] rounded-[4px] shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-[#0B57D0] focus:border-2 text-base"
           />
+          {emailError ? (
+            <p className="mt-2 text-sm text-red-500">{emailError}</p>
+          ) : (
+            <p className="mt-2 text-sm text-gray-500">
+              Você pode usar letras, números e pontos finais.
+            </p>
+          )}
         </div>
          <div>
           <label
@@ -256,10 +322,12 @@ export default function RegisterForm() {
               name="password"
               type={showPassword ? "text" : "password"}
               autoComplete="current-password"
+              maxLength="50"
+              title="Use 8 caracteres ou mais para sua senha"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="password"
+              placeholder="@Password12"
               className="block w-full px-3 py-2 mt-1 text-[#595959] font-medium placeholder-[#858787] border border-[#858787] rounded-[4px] shadow-sm appearance-none focus:outline-none focus:ring-indigo-500 focus:border-[#0B57D0] focus:border-2 text-base"
 
             />
@@ -271,6 +339,7 @@ export default function RegisterForm() {
               {showPassword ? "Hide" : "Show"}
             </button>
           </div>
+          {passwordError && <p className="mt-2 text-sm text-red-500">{passwordError}</p>}
         </div>
         <div>
           <label

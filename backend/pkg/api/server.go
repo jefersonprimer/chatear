@@ -17,6 +17,7 @@ import (
 	userInfra "github.com/jefersonprimer/chatear/backend/internal/user/infrastructure"
 	userSvc "github.com/jefersonprimer/chatear/backend/internal/user/services"
 	userPres "github.com/jefersonprimer/chatear/backend/internal/user/presentation"
+	"github.com/jefersonprimer/chatear/backend/pkg/validator"
 	"github.com/jefersonprimer/chatear/backend/presentation/http"
 	"github.com/jefersonprimer/chatear/backend/presentation/middleware"
 	"github.com/jefersonprimer/chatear/backend/shared/auth"
@@ -43,11 +44,12 @@ func SetupServer(cfg *config.Config) (*gin.Engine, error) {
 	// Initialize shared services
 	tokenService := auth.NewTokenService(refreshTokenRepo, cfg.JwtSecret, cfg)
 	oneTimeTokenService := userInfra.NewRedisOneTimeTokenService(infra.Redis, cfg)
+	val := validator.NewValidator()
 	
 
 	
 		// Initialize user application services
-		registerUserUseCase := userApp.NewRegisterUser(userRepo, eventBus, oneTimeTokenService, emailLimiter)
+		registerUserUseCase := userApp.NewRegisterUser(userRepo, eventBus, oneTimeTokenService, emailLimiter, val)
 		loginUseCase := userApp.NewLogin(userRepo, tokenService, refreshTokenRepo)
 		verifyEmailUseCase := userApp.NewVerifyEmail(userRepo, oneTimeTokenService)
 		logoutUser := userApp.NewLogoutUser(refreshTokenRepo, blacklistRepo, tokenService)
