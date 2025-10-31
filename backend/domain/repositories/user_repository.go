@@ -18,4 +18,5 @@ type UserRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	FindSoftDeletedBefore(ctx context.Context, t time.Time) ([]*entities.User, error)
 	HardDelete(ctx context.Context, id uuid.UUID) error
+	UpdateAvatar(ctx context.Context, id uuid.UUID, avatarURL, avatarPublicID string) error
 }

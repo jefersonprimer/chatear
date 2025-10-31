@@ -59,6 +59,21 @@ func (s *RedisOneTimeTokenService) VerifyToken(ctx context.Context, token string
 	return userID, nil
 }
 
+// PeekToken checks if a one-time token exists and returns the associated user ID without deleting it.
+func (s *RedisOneTimeTokenService) PeekToken(ctx context.Context, token string) (string, error) {
+	key := fmt.Sprintf("one_time_token:%s", token)
+
+	userID, err := s.RedisClient.Get(ctx, key).Result()
+	if err == redis.Nil {
+		return "", fmt.Errorf("one-time token not found or expired")
+	}
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve one-time token from Redis: %w", err)
+	}
+
+	return userID, nil
+}
+
 // GetExpiry returns the configured expiry duration for one-time tokens.
 func (s *RedisOneTimeTokenService) GetExpiry() time.Duration {
 	return s.Expiry

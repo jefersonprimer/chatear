@@ -1,3 +1,0 @@
-{
-  "query": "mutation { registerUser(input: {name: \"jeferson primer\", email: \"jefersonpriimer@gmail.com\", password: \"password\"}) { id, name, email } }"
-}

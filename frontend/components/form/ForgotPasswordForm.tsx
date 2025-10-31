@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useMutation } from "@apollo/client";
+import { useMutation } from "@apollo/client/react";
 import Link from "next/link";
 import { RECOVER_PASSWORD_MUTATION } from "@/lib/graphql/mutations";
 

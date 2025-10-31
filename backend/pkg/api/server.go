@@ -1,6 +1,10 @@
 package api
 
 import (
+	"context"
+	"errors"
+
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gin-gonic/gin"
@@ -11,6 +15,7 @@ import (
 	"github.com/jefersonprimer/chatear/backend/application/usecases"
 	userApp "github.com/jefersonprimer/chatear/backend/internal/user/application"
 	userInfra "github.com/jefersonprimer/chatear/backend/internal/user/infrastructure"
+	userSvc "github.com/jefersonprimer/chatear/backend/internal/user/services"
 	userPres "github.com/jefersonprimer/chatear/backend/internal/user/presentation"
 	"github.com/jefersonprimer/chatear/backend/presentation/http"
 	"github.com/jefersonprimer/chatear/backend/presentation/middleware"
@@ -52,6 +57,11 @@ func SetupServer(cfg *config.Config) (*gin.Engine, error) {
 		refreshToken := userApp.NewRefreshToken(refreshTokenRepo, tokenService, userRepo)
 		getUsersUseCase := usecases.NewUserUseCases(userRepo)
 		verifyTokenAndResetPasswordUseCase := userApp.NewVerifyTokenAndResetPassword(userRepo, oneTimeTokenService)
+		cloudinaryService, err := userSvc.NewCloudinaryService(cfg.CloudinaryURL)
+		if err != nil {
+			return nil, err
+		}
+		avatarUsecases := usecases.NewAvatarUsecases(userRepo, cloudinaryService)
 	
 			
 		// Initialize HTTP handlers
@@ -94,26 +104,37 @@ func SetupServer(cfg *config.Config) (*gin.Engine, error) {
 		publicRoutes.GET("/healthz", healthHandler.Healthz)
 		publicRoutes.GET("/readyz", healthHandler.Readyz)
 	
-		// GraphQL setup
-		srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{
-			Resolvers: &graph.Resolver{
-				RegisterUserUseCase: registerUserUseCase,
-				LoginUseCase:        loginUseCase,
-				VerifyEmailUseCase:  verifyEmailUseCase,
-				LogoutUser:          logoutUser,
-				RecoverPassword:     passwordRecovery,
-				DeleteUser:          deleteUser,
-				RecoverAccount:      recoverAccount,
-				RefreshToken:        refreshToken,
-				GetUsersUseCase:     getUsersUseCase,
-				TokenService:        tokenService,
-				OneTimeTokenService: oneTimeTokenService,
-				EmailRateLimiter:    emailLimiter,
-				EventBus:            eventBus,
-				UserRepository:      userRepo,
-			},
-		}))
-	graphqlHandler := gin.WrapH(srv)
+			// GraphQL setup
+			c := graph.Config{
+				Resolvers: &graph.Resolver{
+					RegisterUserUseCase: registerUserUseCase,
+					LoginUseCase:        loginUseCase,
+					VerifyEmailUseCase:  verifyEmailUseCase,
+					LogoutUser:          logoutUser,
+					RecoverPassword:     passwordRecovery,
+					DeleteUser:          deleteUser,
+					RecoverAccount:      recoverAccount,
+					RefreshToken:        refreshToken,
+					GetUsersUseCase:     getUsersUseCase,
+					TokenService:        tokenService,
+					OneTimeTokenService: oneTimeTokenService,
+					EmailRateLimiter:    emailLimiter,
+					EventBus:            eventBus,
+					UserRepository:      userRepo,
+					AvatarUsecases:      avatarUsecases,
+				},
+			}
+		
+			c.Directives.IsAuthenticated = func(ctx context.Context, obj interface{}, next graphql.Resolver) (res interface{}, err error) {
+				_, err = auth.GetUserIDFromContext(ctx)
+				if err != nil {
+					return nil, errors.New("Access denied: User not authenticated.")
+				}
+				return next(ctx)
+			}
+		
+			srv := handler.NewDefaultServer(graph.NewExecutableSchema(c))
+			graphqlHandler := gin.WrapH(srv)
 	r.POST("/graphql", auth.OptionalAuthMiddleware(tokenService, blacklistRepo), middleware.GinContextToContextMiddleware(), graphqlHandler)
 
 	r.GET("/playground", gin.WrapH(playground.Handler("GraphQL playground", "/graphql")))

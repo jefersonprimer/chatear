@@ -1,0 +1,11 @@
+.git
+vendor
+docs
+*.md
+*.env
+.env.example
+docker-compose*.yml
+*.log
+tmp
+bin
+

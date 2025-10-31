@@ -1,6 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
-import CameraScanner from "../../../components/CameraScanner";
+import CameraScanner from "../../components/CameraScanner";
 
 export default function ScanPage() {
   const router = useRouter();

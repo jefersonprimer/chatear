@@ -21,6 +21,7 @@ type RegisterUserRequest struct {
 	Name     string
 	Email    string
 	Password string
+	Gender   string
 }
 
 // RegisterUserResponse represents the response after registering a new user.
@@ -78,7 +79,7 @@ func (uc *RegisterUser) Execute(ctx context.Context, req RegisterUserRequest) (*
 	}
 
 	// Create new user entity
-	user := entities.NewUser(req.Name, req.Email, string(hashedPassword))
+	user := entities.NewUser(req.Name, req.Email, string(hashedPassword), req.Gender)
 
 	// Persist the user
 	if err := uc.UserRepository.Create(ctx, user); err != nil {

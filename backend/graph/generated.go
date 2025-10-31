@@ -44,6 +44,7 @@ type ResolverRoot interface {
 }
 
 type DirectiveRoot struct {
+	IsAuthenticated func(ctx context.Context, obj any, next graphql.Resolver) (res any, err error)
 }
 
 type ComplexityRoot struct {
@@ -60,6 +61,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		DeleteAccount   func(childComplexity int, input model.DeleteAccountInput) int
+		DeleteAvatar    func(childComplexity int) int
 		Login           func(childComplexity int, input model.LoginInput) int
 		Logout          func(childComplexity int) int
 		RecoverAccount  func(childComplexity int, input model.RecoverAccountInput) int
@@ -67,6 +69,7 @@ type ComplexityRoot struct {
 		RefreshToken    func(childComplexity int, input model.RefreshTokenInput) int
 		Register        func(childComplexity int, input model.RegisterUserInput) int
 		RegisterUser    func(childComplexity int, input model.RegisterUserInput) int
+		UploadAvatar    func(childComplexity int, file graphql.Upload) int
 		VerifyEmail     func(childComplexity int, input model.VerifyEmailInput) int
 	}
 
@@ -81,6 +84,7 @@ type ComplexityRoot struct {
 		DeletedAt       func(childComplexity int) int
 		DeletionDueAt   func(childComplexity int) int
 		Email           func(childComplexity int) int
+		Gender          func(childComplexity int) int
 		ID              func(childComplexity int) int
 		IsDeleted       func(childComplexity int) int
 		IsEmailVerified func(childComplexity int) int
@@ -91,7 +95,7 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	RegisterUser(ctx context.Context, input model.RegisterUserInput) (*model.User, error)
+	RegisterUser(ctx context.Context, input model.RegisterUserInput) (*model.AuthResponse, error)
 	Login(ctx context.Context, input model.LoginInput) (*model.AuthResponse, error)
 	Logout(ctx context.Context) (bool, error)
 	RecoverPassword(ctx context.Context, input model.RecoverPasswordInput) (bool, error)
@@ -99,6 +103,8 @@ type MutationResolver interface {
 	RecoverAccount(ctx context.Context, input model.RecoverAccountInput) (bool, error)
 	VerifyEmail(ctx context.Context, input model.VerifyEmailInput) (bool, error)
 	RefreshToken(ctx context.Context, input model.RefreshTokenInput) (*model.AuthResponse, error)
+	UploadAvatar(ctx context.Context, file graphql.Upload) (string, error)
+	DeleteAvatar(ctx context.Context) (bool, error)
 	Register(ctx context.Context, input model.RegisterUserInput) (*model.User, error)
 }
 type QueryResolver interface {
@@ -168,6 +174,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.DeleteAccount(childComplexity, args["input"].(model.DeleteAccountInput)), true
+	case "Mutation.deleteAvatar":
+		if e.complexity.Mutation.DeleteAvatar == nil {
+			break
+		}
+
+		return e.complexity.Mutation.DeleteAvatar(childComplexity), true
 	case "Mutation.login":
 		if e.complexity.Mutation.Login == nil {
 			break
@@ -240,6 +252,17 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Mutation.RegisterUser(childComplexity, args["input"].(model.RegisterUserInput)), true
+	case "Mutation.uploadAvatar":
+		if e.complexity.Mutation.UploadAvatar == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_uploadAvatar_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UploadAvatar(childComplexity, args["file"].(graphql.Upload)), true
 	case "Mutation.verifyEmail":
 		if e.complexity.Mutation.VerifyEmail == nil {
 			break
@@ -295,6 +318,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.User.Email(childComplexity), true
+	case "User.gender":
+		if e.complexity.User.Gender == nil {
+			break
+		}
+
+		return e.complexity.User.Gender(childComplexity), true
 	case "User.id":
 		if e.complexity.User.ID == nil {
 			break
@@ -464,9 +493,6 @@ type LoginResponse {
 }
 
 
-extend type Query {
-    me: User
-}
 
 extend type Mutation {
     register(input: RegisterUserInput!): User
@@ -482,7 +508,7 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 func (ec *executionContext) field_Mutation_deleteAccount_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteAccountInput2githubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐDeleteAccountInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNDeleteAccountInput2githubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐDeleteAccountInput)
 	if err != nil {
 		return nil, err
 	}
@@ -493,7 +519,7 @@ func (ec *executionContext) field_Mutation_deleteAccount_args(ctx context.Contex
 func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNLoginInput2githubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐLoginInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNLoginInput2githubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐLoginInput)
 	if err != nil {
 		return nil, err
 	}
@@ -504,7 +530,7 @@ func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawAr
 func (ec *executionContext) field_Mutation_recoverAccount_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRecoverAccountInput2githubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐRecoverAccountInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRecoverAccountInput2githubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐRecoverAccountInput)
 	if err != nil {
 		return nil, err
 	}
@@ -515,7 +541,7 @@ func (ec *executionContext) field_Mutation_recoverAccount_args(ctx context.Conte
 func (ec *executionContext) field_Mutation_recoverPassword_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRecoverPasswordInput2githubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐRecoverPasswordInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRecoverPasswordInput2githubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐRecoverPasswordInput)
 	if err != nil {
 		return nil, err
 	}
@@ -526,7 +552,7 @@ func (ec *executionContext) field_Mutation_recoverPassword_args(ctx context.Cont
 func (ec *executionContext) field_Mutation_refreshToken_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRefreshTokenInput2githubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐRefreshTokenInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRefreshTokenInput2githubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐRefreshTokenInput)
 	if err != nil {
 		return nil, err
 	}
@@ -537,7 +563,7 @@ func (ec *executionContext) field_Mutation_refreshToken_args(ctx context.Context
 func (ec *executionContext) field_Mutation_registerUser_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRegisterUserInput2githubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐRegisterUserInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRegisterUserInput2githubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐRegisterUserInput)
 	if err != nil {
 		return nil, err
 	}
@@ -548,7 +574,7 @@ func (ec *executionContext) field_Mutation_registerUser_args(ctx context.Context
 func (ec *executionContext) field_Mutation_register_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRegisterUserInput2githubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐRegisterUserInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNRegisterUserInput2githubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐRegisterUserInput)
 	if err != nil {
 		return nil, err
 	}
@@ -556,10 +582,21 @@ func (ec *executionContext) field_Mutation_register_args(ctx context.Context, ra
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_uploadAvatar_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "file", ec.unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload)
+	if err != nil {
+		return nil, err
+	}
+	args["file"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_verifyEmail_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNVerifyEmailInput2githubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐVerifyEmailInput)
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "input", ec.unmarshalNVerifyEmailInput2githubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐVerifyEmailInput)
 	if err != nil {
 		return nil, err
 	}
@@ -640,7 +677,7 @@ func (ec *executionContext) _AuthResponse_user(ctx context.Context, field graphq
 			return obj.User, nil
 		},
 		nil,
-		ec.marshalNUser2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐUser,
+		ec.marshalNUser2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐUser,
 		true,
 		true,
 	)
@@ -676,6 +713,8 @@ func (ec *executionContext) fieldContext_AuthResponse_user(_ context.Context, fi
 				return ec.fieldContext_User_lastLoginAt(ctx, field)
 			case "isDeleted":
 				return ec.fieldContext_User_isDeleted(ctx, field)
+			case "gender":
+				return ec.fieldContext_User_gender(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -810,7 +849,7 @@ func (ec *executionContext) _Mutation_registerUser(ctx context.Context, field gr
 			return ec.resolvers.Mutation().RegisterUser(ctx, fc.Args["input"].(model.RegisterUserInput))
 		},
 		nil,
-		ec.marshalNUser2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐUser,
+		ec.marshalNAuthResponse2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐAuthResponse,
 		true,
 		true,
 	)
@@ -824,30 +863,14 @@ func (ec *executionContext) fieldContext_Mutation_registerUser(ctx context.Conte
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_User_id(ctx, field)
-			case "name":
-				return ec.fieldContext_User_name(ctx, field)
-			case "email":
-				return ec.fieldContext_User_email(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_User_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_User_updatedAt(ctx, field)
-			case "isEmailVerified":
-				return ec.fieldContext_User_isEmailVerified(ctx, field)
-			case "deletedAt":
-				return ec.fieldContext_User_deletedAt(ctx, field)
-			case "avatarURL":
-				return ec.fieldContext_User_avatarURL(ctx, field)
-			case "deletionDueAt":
-				return ec.fieldContext_User_deletionDueAt(ctx, field)
-			case "lastLoginAt":
-				return ec.fieldContext_User_lastLoginAt(ctx, field)
-			case "isDeleted":
-				return ec.fieldContext_User_isDeleted(ctx, field)
+			case "user":
+				return ec.fieldContext_AuthResponse_user(ctx, field)
+			case "accessToken":
+				return ec.fieldContext_AuthResponse_accessToken(ctx, field)
+			case "refreshToken":
+				return ec.fieldContext_AuthResponse_refreshToken(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type AuthResponse", field.Name)
 		},
 	}
 	defer func() {
@@ -875,7 +898,7 @@ func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.C
 			return ec.resolvers.Mutation().Login(ctx, fc.Args["input"].(model.LoginInput))
 		},
 		nil,
-		ec.marshalNAuthResponse2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐAuthResponse,
+		ec.marshalNAuthResponse2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐAuthResponse,
 		true,
 		true,
 	)
@@ -1117,7 +1140,7 @@ func (ec *executionContext) _Mutation_refreshToken(ctx context.Context, field gr
 			return ec.resolvers.Mutation().RefreshToken(ctx, fc.Args["input"].(model.RefreshTokenInput))
 		},
 		nil,
-		ec.marshalNAuthResponse2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐAuthResponse,
+		ec.marshalNAuthResponse2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐAuthResponse,
 		true,
 		true,
 	)
@@ -1155,6 +1178,76 @@ func (ec *executionContext) fieldContext_Mutation_refreshToken(ctx context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_uploadAvatar(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_uploadAvatar,
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.resolvers.Mutation().UploadAvatar(ctx, fc.Args["file"].(graphql.Upload))
+		},
+		nil,
+		ec.marshalNString2string,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_uploadAvatar(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_uploadAvatar_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteAvatar(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_Mutation_deleteAvatar,
+		func(ctx context.Context) (any, error) {
+			return ec.resolvers.Mutation().DeleteAvatar(ctx)
+		},
+		nil,
+		ec.marshalNBoolean2bool,
+		true,
+		true,
+	)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteAvatar(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_register(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -1166,7 +1259,7 @@ func (ec *executionContext) _Mutation_register(ctx context.Context, field graphq
 			return ec.resolvers.Mutation().Register(ctx, fc.Args["input"].(model.RegisterUserInput))
 		},
 		nil,
-		ec.marshalOUser2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐUser,
+		ec.marshalOUser2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐUser,
 		true,
 		false,
 	)
@@ -1202,6 +1295,8 @@ func (ec *executionContext) fieldContext_Mutation_register(ctx context.Context, 
 				return ec.fieldContext_User_lastLoginAt(ctx, field)
 			case "isDeleted":
 				return ec.fieldContext_User_isDeleted(ctx, field)
+			case "gender":
+				return ec.fieldContext_User_gender(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -1230,7 +1325,7 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 			return ec.resolvers.Query().Users(ctx)
 		},
 		nil,
-		ec.marshalNUser2ᚕᚖgithubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐUserᚄ,
+		ec.marshalNUser2ᚕᚖgithubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐUserᚄ,
 		true,
 		true,
 	)
@@ -1266,6 +1361,8 @@ func (ec *executionContext) fieldContext_Query_users(_ context.Context, field gr
 				return ec.fieldContext_User_lastLoginAt(ctx, field)
 			case "isDeleted":
 				return ec.fieldContext_User_isDeleted(ctx, field)
+			case "gender":
+				return ec.fieldContext_User_gender(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -1282,8 +1379,21 @@ func (ec *executionContext) _Query_me(ctx context.Context, field graphql.Collect
 		func(ctx context.Context) (any, error) {
 			return ec.resolvers.Query().Me(ctx)
 		},
-		nil,
-		ec.marshalOUser2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐUser,
+		func(ctx context.Context, next graphql.Resolver) graphql.Resolver {
+			directive0 := next
+
+			directive1 := func(ctx context.Context) (any, error) {
+				if ec.directives.IsAuthenticated == nil {
+					var zeroVal *model.User
+					return zeroVal, errors.New("directive isAuthenticated is not implemented")
+				}
+				return ec.directives.IsAuthenticated(ctx, nil, directive0)
+			}
+
+			next = directive1
+			return next
+		},
+		ec.marshalOUser2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐUser,
 		true,
 		false,
 	)
@@ -1319,6 +1429,8 @@ func (ec *executionContext) fieldContext_Query_me(_ context.Context, field graph
 				return ec.fieldContext_User_lastLoginAt(ctx, field)
 			case "isDeleted":
 				return ec.fieldContext_User_isDeleted(ctx, field)
+			case "gender":
+				return ec.fieldContext_User_gender(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
@@ -1748,6 +1860,35 @@ func (ec *executionContext) fieldContext_User_isDeleted(_ context.Context, field
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_gender(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		ec.fieldContext_User_gender,
+		func(ctx context.Context) (any, error) {
+			return obj.Gender, nil
+		},
+		nil,
+		ec.marshalOGender2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐGender,
+		true,
+		false,
+	)
+}
+
+func (ec *executionContext) fieldContext_User_gender(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Gender does not have child fields")
 		},
 	}
 	return fc, nil
@@ -3355,7 +3496,7 @@ func (ec *executionContext) unmarshalInputRegisterUserInput(ctx context.Context,
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "email", "password"}
+	fieldsInOrder := [...]string{"name", "email", "password", "gender", "avatar"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -3383,6 +3524,20 @@ func (ec *executionContext) unmarshalInputRegisterUserInput(ctx context.Context,
 				return it, err
 			}
 			it.Password = data
+		case "gender":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("gender"))
+			data, err := ec.unmarshalNGender2githubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐGender(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Gender = data
+		case "avatar":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("avatar"))
+			data, err := ec.unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Avatar = data
 		}
 	}
 
@@ -3592,6 +3747,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "uploadAvatar":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_uploadAvatar(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteAvatar":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteAvatar(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "register":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_register(ctx, field)
@@ -3764,6 +3933,8 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "gender":
+			out.Values[i] = ec._User_gender(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4122,11 +4293,11 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNAuthResponse2githubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐAuthResponse(ctx context.Context, sel ast.SelectionSet, v model.AuthResponse) graphql.Marshaler {
+func (ec *executionContext) marshalNAuthResponse2githubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐAuthResponse(ctx context.Context, sel ast.SelectionSet, v model.AuthResponse) graphql.Marshaler {
 	return ec._AuthResponse(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNAuthResponse2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐAuthResponse(ctx context.Context, sel ast.SelectionSet, v *model.AuthResponse) graphql.Marshaler {
+func (ec *executionContext) marshalNAuthResponse2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐAuthResponse(ctx context.Context, sel ast.SelectionSet, v *model.AuthResponse) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -4152,9 +4323,19 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNDeleteAccountInput2githubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐDeleteAccountInput(ctx context.Context, v any) (model.DeleteAccountInput, error) {
+func (ec *executionContext) unmarshalNDeleteAccountInput2githubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐDeleteAccountInput(ctx context.Context, v any) (model.DeleteAccountInput, error) {
 	res, err := ec.unmarshalInputDeleteAccountInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNGender2githubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐGender(ctx context.Context, v any) (model.Gender, error) {
+	var res model.Gender
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNGender2githubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐGender(ctx context.Context, sel ast.SelectionSet, v model.Gender) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v any) (string, error) {
@@ -4173,27 +4354,27 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) unmarshalNLoginInput2githubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐLoginInput(ctx context.Context, v any) (model.LoginInput, error) {
+func (ec *executionContext) unmarshalNLoginInput2githubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐLoginInput(ctx context.Context, v any) (model.LoginInput, error) {
 	res, err := ec.unmarshalInputLoginInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNRecoverAccountInput2githubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐRecoverAccountInput(ctx context.Context, v any) (model.RecoverAccountInput, error) {
+func (ec *executionContext) unmarshalNRecoverAccountInput2githubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐRecoverAccountInput(ctx context.Context, v any) (model.RecoverAccountInput, error) {
 	res, err := ec.unmarshalInputRecoverAccountInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNRecoverPasswordInput2githubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐRecoverPasswordInput(ctx context.Context, v any) (model.RecoverPasswordInput, error) {
+func (ec *executionContext) unmarshalNRecoverPasswordInput2githubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐRecoverPasswordInput(ctx context.Context, v any) (model.RecoverPasswordInput, error) {
 	res, err := ec.unmarshalInputRecoverPasswordInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNRefreshTokenInput2githubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐRefreshTokenInput(ctx context.Context, v any) (model.RefreshTokenInput, error) {
+func (ec *executionContext) unmarshalNRefreshTokenInput2githubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐRefreshTokenInput(ctx context.Context, v any) (model.RefreshTokenInput, error) {
 	res, err := ec.unmarshalInputRefreshTokenInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNRegisterUserInput2githubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐRegisterUserInput(ctx context.Context, v any) (model.RegisterUserInput, error) {
+func (ec *executionContext) unmarshalNRegisterUserInput2githubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐRegisterUserInput(ctx context.Context, v any) (model.RegisterUserInput, error) {
 	res, err := ec.unmarshalInputRegisterUserInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -4214,11 +4395,23 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) marshalNUser2githubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
-	return ec._User(ctx, sel, &v)
+func (ec *executionContext) unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v any) (graphql.Upload, error) {
+	res, err := graphql.UnmarshalUpload(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, sel ast.SelectionSet, v graphql.Upload) graphql.Marshaler {
+	_ = sel
+	res := graphql.MarshalUpload(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐUserᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -4242,7 +4435,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋjefersonprimerᚋc
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalNUser2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -4262,7 +4455,7 @@ func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋjefersonprimerᚋc
 	return ret
 }
 
-func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -4272,7 +4465,7 @@ func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋjefersonprimerᚋchat
 	return ec._User(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNVerifyEmailInput2githubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐVerifyEmailInput(ctx context.Context, v any) (model.VerifyEmailInput, error) {
+func (ec *executionContext) unmarshalNVerifyEmailInput2githubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐVerifyEmailInput(ctx context.Context, v any) (model.VerifyEmailInput, error) {
 	res, err := ec.unmarshalInputVerifyEmailInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -4560,6 +4753,22 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
+func (ec *executionContext) unmarshalOGender2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐGender(ctx context.Context, v any) (*model.Gender, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.Gender)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOGender2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐGender(ctx context.Context, sel ast.SelectionSet, v *model.Gender) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
+}
+
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v any) (*string, error) {
 	if v == nil {
 		return nil, nil
@@ -4578,7 +4787,25 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚑbackendᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) unmarshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v any) (*graphql.Upload, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalUpload(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, sel ast.SelectionSet, v *graphql.Upload) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	_ = ctx
+	res := graphql.MarshalUpload(*v)
+	return res
+}
+
+func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋjefersonprimerᚋchatearᚋbackendᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

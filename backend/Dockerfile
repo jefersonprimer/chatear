@@ -49,3 +49,4 @@ ENV APP_BIN=chatear-api
 # Permite substituir APP_BIN no docker-compose
 ENTRYPOINT ["sh", "-c", "./$APP_BIN"]
 
+

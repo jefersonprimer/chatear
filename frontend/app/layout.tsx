@@ -34,6 +34,7 @@ export default async function RootLayout({
     <html lang={locale}>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
         <LanguageProvider locale={locale}>
           <AuthProvider>

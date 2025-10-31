@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/99designs/gqlgen/graphql"
 	"github.com/google/uuid"
 	"github.com/jefersonprimer/chatear/backend/graph/model"
 	"github.com/jefersonprimer/chatear/backend/internal/user/application"
@@ -15,11 +16,12 @@ import (
 )
 
 // RegisterUser is the resolver for the registerUser field.
-func (r *mutationResolver) RegisterUser(ctx context.Context, input model.RegisterUserInput) (*model.User, error) {
+func (r *mutationResolver) RegisterUser(ctx context.Context, input model.RegisterUserInput) (*model.AuthResponse, error) {
 	registerReq := application.RegisterUserRequest{
 		Name:     input.Name,
 		Email:    input.Email,
 		Password: input.Password,
+		Gender:   input.Gender.String(),
 	}
 
 	registerRes, err := r.Resolver.RegisterUserUseCase.Execute(ctx, registerReq)
@@ -33,7 +35,21 @@ func (r *mutationResolver) RegisterUser(ctx context.Context, input model.Registe
 		return nil, err
 	}
 
-	return toModelUser(user), nil
+	accessToken, err := r.Resolver.TokenService.GenerateAccessToken(user.ID.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate access token: %w", err)
+	}
+
+	newRefreshToken, err := r.Resolver.TokenService.GenerateRefreshToken(user.ID.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
+	}
+
+	return &model.AuthResponse{
+		User:         toModelUser(user),
+		AccessToken:  accessToken,
+		RefreshToken: newRefreshToken,
+	}, nil
 }
 
 // Login is the resolver for the login field.
@@ -134,6 +150,39 @@ func (r *mutationResolver) RefreshToken(ctx context.Context, input model.Refresh
 	}
 
 	return &model.AuthResponse{AccessToken: authTokens.AccessToken, RefreshToken: authTokens.RefreshToken}, nil
+}
+
+// UploadAvatar is the resolver for the uploadAvatar field.
+func (r *mutationResolver) UploadAvatar(ctx context.Context, file graphql.Upload) (string, error) {
+	userID, err := auth.GetUserIDFromContext(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	userEntity, err := r.Resolver.AvatarUsecases.UploadAvatar(ctx, userID, file.File)
+	if err != nil {
+		return "", err
+	}
+
+	if userEntity.AvatarURL != nil {
+		return *userEntity.AvatarURL, nil
+	}
+	return "", nil
+}
+
+// DeleteAvatar is the resolver for the deleteAvatar field.
+func (r *mutationResolver) DeleteAvatar(ctx context.Context) (bool, error) {
+	userID, err := auth.GetUserIDFromContext(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	err = r.Resolver.AvatarUsecases.DeleteAvatar(ctx, userID)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 // Register is the resolver for the register field.

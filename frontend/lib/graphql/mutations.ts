@@ -14,15 +14,6 @@ export const LOGIN_MUTATION = gql`
   }
 `;
 
-export const REGISTER_USER_MUTATION = gql`
-  mutation RegisterUser($input: RegisterUserInput!) {
-    registerUser(input: $input) {
-      id
-      name
-      email
-    }
-  }
-`;
 
 export const RECOVER_PASSWORD_MUTATION = gql`
   mutation RecoverPassword($input: RecoverPasswordInput!) {
@@ -51,5 +42,11 @@ export const LOGOUT_MUTATION = gql`
 export const DELETE_ACCOUNT_MUTATION = gql`
   mutation DeleteAccount($input: DeleteAccountInput!) {
     deleteAccount(input: $input)
+  }
+`;
+
+export const UPLOAD_AVATAR_MUTATION = gql`
+  mutation UploadAvatar($file: Upload!) {
+    uploadAvatar(file: $file)
   }
 `;

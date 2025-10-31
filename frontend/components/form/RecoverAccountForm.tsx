@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useMutation } from "@apollo/client";
+import { useMutation } from "@apollo/client/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { RECOVER_ACCOUNT_MUTATION } from "@/lib/graphql/mutations";

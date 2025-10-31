@@ -2,6 +2,13 @@
 #
 # https://gqlgen.com/getting-started/
 
+directive @isAuthenticated on FIELD_DEFINITION
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
 type User {
   id: ID!
   name: String!
@@ -14,6 +21,7 @@ type User {
   deletionDueAt: String
   lastLoginAt: String
   isDeleted: Boolean!
+  gender: Gender
 }
 
 type AuthResponse {
@@ -26,6 +34,7 @@ input RegisterUserInput {
   name: String!
   email: String!
   password: String!
+  gender: Gender!
 }
 
 input LoginInput {
@@ -54,12 +63,15 @@ input RefreshTokenInput {
   refreshToken: String!
 }
 
+scalar Upload
+
 type Query {
   users: [User!]!
+  me: User @isAuthenticated
 }
 
 type Mutation {
-  registerUser(input: RegisterUserInput!): User!
+  registerUser(input: RegisterUserInput!): AuthResponse!
   login(input: LoginInput!): AuthResponse!
   logout: Boolean!
   recoverPassword(input: RecoverPasswordInput!): Boolean!
@@ -67,4 +79,6 @@ type Mutation {
   recoverAccount(input: RecoverAccountInput!): Boolean!
   verifyEmail(input: VerifyEmailInput!): Boolean!
   refreshToken(input: RefreshTokenInput!): AuthResponse!
+  uploadAvatar(file: Upload!): String!
+  deleteAvatar: Boolean!
 }

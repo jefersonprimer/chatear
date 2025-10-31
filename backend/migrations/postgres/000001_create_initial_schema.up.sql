@@ -111,6 +111,8 @@ CREATE TABLE public.users (
   deletion_due_at timestamp without time zone,
   last_login_at timestamp without time zone,
   is_deleted boolean DEFAULT false,
+  avatar_public_id text,
+  gender text CHECK (gender = ANY (ARRAY['male'::text, 'female'::text])),
   CONSTRAINT users_pkey PRIMARY KEY (id)
 );
 

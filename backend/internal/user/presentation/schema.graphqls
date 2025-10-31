@@ -6,9 +6,6 @@ type LoginResponse {
 }
 
 
-extend type Query {
-    me: User
-}
 
 extend type Mutation {
     register(input: RegisterUserInput!): User

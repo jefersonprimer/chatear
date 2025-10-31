@@ -68,7 +68,7 @@ func NewUserHandlers(
 	router.POST("/login", handler.LoginHandler)
 	router.GET("/verify-email", handler.VerifyEmailHandler)
 	router.POST("/password-recovery", handler.RecoverPasswordHandler)
-	router.GET("/reset-password", handler.ResetPasswordFormHandler) // Serves the password reset form
+	router.GET("/recover-account", handler.RecoverAccountFormHandler) // Serves the password reset form
 	router.POST("/reset-password-confirm", handler.ResetPasswordConfirmHandler)
 	router.POST("/recover-account", handler.RecoverAccountHandler)
 	router.POST("/refresh-token", handler.RefreshTokenHandler)
@@ -118,28 +118,26 @@ func (h *UserHandler) ResetPasswordConfirmHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Password reset successfully"})
 }
 
-// ResetPasswordFormHandler handles the GET request for the password reset form.
-func (h *UserHandler) ResetPasswordFormHandler(c *gin.Context) {
+// RecoverAccountFormHandler handles the GET request for the account recovery form.
+func (h *UserHandler) RecoverAccountFormHandler(c *gin.Context) {
 	token := c.Query("token")
 	if token == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Token is missing"})
+		errorURL := fmt.Sprintf("%s/auth/recover-account?error=token_missing", h.FrontendURL)
+		c.Redirect(http.StatusFound, errorURL)
 		return
 	}
 
 	// Validate the token
-	_, err := h.OneTimeTokenService.VerifyToken(c.Request.Context(), token)
+	_, err := h.OneTimeTokenService.PeekToken(c.Request.Context(), token)
 	if err != nil {
-		if errors.Is(err, appErrors.ErrInvalidToken) || errors.Is(err, appErrors.ErrTokenExpired) {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to validate token"})
+		errorURL := fmt.Sprintf("%s/auth/recover-account?error=invalid_token", h.FrontendURL)
+		c.Redirect(http.StatusFound, errorURL)
 		return
 	}
 
-	// For now, just return a success message.
-	// In a real application, this would render an HTML form for password reset.
-	c.JSON(http.StatusOK, gin.H{"message": "Token is valid. You can now reset your password."})
+	// Redirect to the frontend password reset page
+	resetPasswordURL := fmt.Sprintf("%s/auth/recover-account?token=%s", h.FrontendURL, token)
+	c.Redirect(http.StatusFound, resetPasswordURL)
 }
 
 // Register handles user registration.
@@ -210,7 +208,7 @@ func (h *UserHandler) VerifyEmailHandler(c *gin.Context) {
 		return
 	}
 
-	c.Redirect(http.StatusFound, fmt.Sprintf("%s/auth/success", h.FrontendURL))
+	c.Redirect(http.StatusFound, fmt.Sprintf("%s/auth/sucess", h.FrontendURL))
 }
 
 // Logout handles user logout.

@@ -30,6 +30,7 @@ type Config struct {
 	KeyRotationInterval     time.Duration
 	MaxEmailsPerDay         int
 	HardDeleteRetentionPeriod time.Duration
+	CloudinaryURL           string
 }
 
 // LoadConfig loads the configuration from the environment variables
@@ -59,6 +60,7 @@ func LoadConfig() *Config {
 		KeyRotationInterval:       getEnvAsDuration("KEY_ROTATION_INTERVAL", 24*time.Hour),
 		MaxEmailsPerDay:           getEnvAsInt("MAX_EMAILS_PER_DAY", 2),
 		HardDeleteRetentionPeriod: getEnvAsDuration("HARD_DELETE_RETENTION_PERIOD", 60*24*time.Hour),
+		CloudinaryURL:             getEnv("CLOUDINARY_URL", ""),
 	}
 }
 

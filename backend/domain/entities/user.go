@@ -17,13 +17,15 @@ type User struct {
 	IsEmailVerified   bool       `json:"is_email_verified"`
 	DeletedAt         *time.Time `json:"deleted_at,omitempty"`
 	AvatarURL         *string    `json:"avatar_url,omitempty"`
+	AvatarPublicID    *string    `json:"avatar_public_id,omitempty"`
 	DeletionDueAt     *time.Time `json:"deletion_due_at,omitempty"`
 	LastLoginAt       *time.Time `json:"last_login_at,omitempty"`
 	IsDeleted         bool       `json:"is_deleted"`
+	Gender            *string    `json:"gender,omitempty"`
 }
 
 // NewUser creates a new user entity
-func NewUser(name, email, passwordHash string) *User {
+func NewUser(name, email, passwordHash, gender string) *User {
 	return &User{
 		ID:              uuid.New(),
 		Name:            name,
@@ -33,6 +35,7 @@ func NewUser(name, email, passwordHash string) *User {
 		UpdatedAt:       time.Now(),
 		IsEmailVerified: false,
 		IsDeleted:       false,
+		Gender:          &gender,
 	}
 }
 

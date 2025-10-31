@@ -2,6 +2,7 @@ package infrastructure
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -22,16 +23,21 @@ func NewPostgresUserRepository(db *pgxpool.Pool) *PostgresUserRepository {
 
 // Create creates a new user in the database.
 func (r *PostgresUserRepository) Create(ctx context.Context, user *entities.User) error {
-	query := `INSERT INTO users (id, name, email, password_hash, is_email_verified, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7)`
-	_, err := r.DB.Exec(ctx, query, user.ID, user.Name, user.Email, user.PasswordHash, user.IsEmailVerified, user.CreatedAt, user.UpdatedAt)
+	query := `INSERT INTO users (id, name, email, password_hash, is_email_verified, created_at, updated_at, gender) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+	var gender *string
+	if user.Gender != nil {
+		lowerGender := strings.ToLower(*user.Gender)
+		gender = &lowerGender
+	}
+	_, err := r.DB.Exec(ctx, query, user.ID, user.Name, user.Email, user.PasswordHash, user.IsEmailVerified, user.CreatedAt, user.UpdatedAt, gender)
 	return err
 }
 
 // FindByID retrieves a user by their ID from the database.
 func (r *PostgresUserRepository) FindByID(ctx context.Context, id uuid.UUID) (*entities.User, error) {
-	query := `SELECT id, name, email, password_hash, is_email_verified, created_at, updated_at, last_login_at, avatar_url, is_deleted, deleted_at, deletion_due_at FROM users WHERE id = $1`
+	query := `SELECT id, name, email, password_hash, is_email_verified, created_at, updated_at, last_login_at, avatar_url, avatar_public_id, is_deleted, deleted_at, deletion_due_at, gender FROM users WHERE id = $1`
 	user := &entities.User{}
-	err := r.DB.QueryRow(ctx, query, id).Scan(&user.ID, &user.Name, &user.Email, &user.PasswordHash, &user.IsEmailVerified, &user.CreatedAt, &user.UpdatedAt, &user.LastLoginAt, &user.AvatarURL, &user.IsDeleted, &user.DeletedAt, &user.DeletionDueAt)
+	err := r.DB.QueryRow(ctx, query, id).Scan(&user.ID, &user.Name, &user.Email, &user.PasswordHash, &user.IsEmailVerified, &user.CreatedAt, &user.UpdatedAt, &user.LastLoginAt, &user.AvatarURL, &user.AvatarPublicID, &user.IsDeleted, &user.DeletedAt, &user.DeletionDueAt, &user.Gender)
 	if err != nil {
 		return nil, err
 	}
@@ -40,9 +46,9 @@ func (r *PostgresUserRepository) FindByID(ctx context.Context, id uuid.UUID) (*e
 
 // FindByEmail retrieves a user by their email from the database.
 func (r *PostgresUserRepository) FindByEmail(ctx context.Context, email string) (*entities.User, error) {
-	query := `SELECT id, name, email, password_hash, is_email_verified, created_at, updated_at, last_login_at, avatar_url, is_deleted, deleted_at, deletion_due_at FROM users WHERE email = $1`
+	query := `SELECT id, name, email, password_hash, is_email_verified, created_at, updated_at, last_login_at, avatar_url, avatar_public_id, is_deleted, deleted_at, deletion_due_at, gender FROM users WHERE email = $1`
 	user := &entities.User{}
-	err := r.DB.QueryRow(ctx, query, email).Scan(&user.ID, &user.Name, &user.Email, &user.PasswordHash, &user.IsEmailVerified, &user.CreatedAt, &user.UpdatedAt, &user.LastLoginAt, &user.AvatarURL, &user.IsDeleted, &user.DeletedAt, &user.DeletionDueAt)
+	err := r.DB.QueryRow(ctx, query, email).Scan(&user.ID, &user.Name, &user.Email, &user.PasswordHash, &user.IsEmailVerified, &user.CreatedAt, &user.UpdatedAt, &user.LastLoginAt, &user.AvatarURL, &user.AvatarPublicID, &user.IsDeleted, &user.DeletedAt, &user.DeletionDueAt, &user.Gender)
 	if err != nil {
 		return nil, err
 	}
@@ -112,4 +118,11 @@ func (r *PostgresUserRepository) FindAll(ctx context.Context) ([]*entities.User,
 	}
 
 	return users, nil
+}
+
+// UpdateAvatar updates the avatar URL and public ID of a user in the database.
+func (r *PostgresUserRepository) UpdateAvatar(ctx context.Context, id uuid.UUID, avatarURL, avatarPublicID string) error {
+	query := `UPDATE users SET avatar_url = $1, avatar_public_id = $2, updated_at = $3 WHERE id = $4`
+	_, err := r.DB.Exec(ctx, query, avatarURL, avatarPublicID, time.Now(), id)
+	return err
 }

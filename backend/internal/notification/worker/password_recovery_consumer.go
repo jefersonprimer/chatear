@@ -31,7 +31,7 @@ func (c *PasswordRecoveryConsumer) Consume(ctx context.Context, msg *nats.Msg) {
 		return
 	}
 
-	magicLink := fmt.Sprintf("%s/reset-password?token=%s", event.AppURL, event.VerificationToken)
+	magicLink := fmt.Sprintf("%s/recover-account?token=%s", event.AppURL, event.VerificationToken)
 
 	if err := c.emailService.SendMagicLinkEmail(ctx, event.Email, event.UserID, "Password Reset", magicLink); err != nil {
 		log.Printf("Error sending password recovery email for user %s: %v", event.UserID, err)

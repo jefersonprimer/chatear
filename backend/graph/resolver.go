@@ -28,5 +28,6 @@ type Resolver struct {
 	EventBus               repositories.EventBus
 	UserDeletionRepository repositories.UserDeletionRepository
 	UserRepository         repositories.UserRepository
+	AvatarUsecases         *usecases.AvatarUsecases
 }
 

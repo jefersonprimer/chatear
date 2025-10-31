@@ -9,5 +9,6 @@ import (
 type OneTimeTokenService interface {
 	GenerateToken(ctx context.Context, userID string) (string, error)
 	VerifyToken(ctx context.Context, token string) (string, error)
+	PeekToken(ctx context.Context, token string) (string, error)
 	GetExpiry() time.Duration
 }
