@@ -59,12 +59,12 @@ services:
       - APP_BIN=user_registered_worker
     command: ["sh", "-c", "./user_registered_worker"]
 
-  password-recovery-worker:
+  password-reset-worker:
     <<: *common-env
-    container_name: chatear-password-recovery-worker
+    container_name: chatear-password-reset-worker
     environment:
-      - APP_BIN=password_recovery_worker
-    command: ["sh", "-c", "./password_recovery_worker"]
+      - APP_BIN=password_reset_worker
+    command: ["sh", "-c", "./password_reset_worker"]
 
   nats:
     image: nats:2.10-alpine

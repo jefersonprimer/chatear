@@ -12,7 +12,7 @@ export async function proxy(req: NextRequest) {
     "/auth/login",
     "/auth/register",
     "/auth/forgot-password",
-    "/auth/recover-account",
+    "/auth/reset-password",
     "/auth/verify-email",
     "/auth/sucess",
     "/auth/policies",

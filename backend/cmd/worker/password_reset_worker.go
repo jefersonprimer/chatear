@@ -35,23 +35,23 @@ func main() {
 	templateParser := notificationApp.NewHTMLTemplateParser("internal/notification/infrastructure/templates")
 	smtpSender := notificationInfra.NewSMTPSender(cfg, templateParser)
 	emailSender := notificationApp.NewEmailSender(notificationRepo, smtpSender, emailLimiter)
-	emailService := notificationApp.NewEmailService(emailSender, oneTimeTokenService, cfg.AppURL, cfg.MagicLinkExpiry, emailLimiter)
+		emailService := notificationApp.NewEmailService(emailSender, oneTimeTokenService, cfg.FrontendURL, cfg.MagicLinkExpiry, emailLimiter)
 
-	consumer := notificationWorker.NewPasswordRecoveryConsumer(emailService)
+	consumer := notificationWorker.NewPasswordResetConsumer(emailService)
 
-	_, err = infra.NatsConn.Subscribe(events.PasswordRecoveryRequestedSubject, func(msg *nats.Msg) {
+	_, err = infra.NatsConn.Subscribe(events.PasswordResetRequestedSubject, func(msg *nats.Msg) {
 		consumer.Consume(context.Background(), msg)
 	})
 	if err != nil {
 		log.Fatalf("Error subscribing to NATS subject: %v", err)
 	}
 
-	log.Println("Password recovery worker started. Waiting for events...")
+	log.Println("Password reset worker started. Waiting for events...")
 
 	// Wait for termination signal
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 	<-sigChan
 
-	log.Println("Password recovery worker stopped.")
+	log.Println("Password reset worker stopped.")
 }

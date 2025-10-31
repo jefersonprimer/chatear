@@ -2,14 +2,14 @@
 import { useState } from "react";
 import { useMutation } from "@apollo/client/react";
 import Link from "next/link";
-import { RECOVER_PASSWORD_MUTATION } from "@/lib/graphql/mutations";
+import { RESET_PASSWORD_MUTATION } from "@/lib/graphql/mutations";
 
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  const [recoverPassword, { loading }] = useMutation(RECOVER_PASSWORD_MUTATION, {
+  const [resetPassword, { loading }] = useMutation(RESET_PASSWORD_MUTATION, {
     onCompleted: () => {
       setSuccess(true);
     },
@@ -22,7 +22,7 @@ export default function ForgotPasswordForm() {
     e.preventDefault();
     setError("");
     setSuccess(false);
-    recoverPassword({ variables: { input: { email } } });
+    resetPassword({ variables: { input: { email } } });
   };
 
   return (

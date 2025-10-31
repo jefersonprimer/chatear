@@ -17,7 +17,7 @@ type Resolver struct {
 	LoginUseCase           *userApplication.Login
 	VerifyEmailUseCase     *userApplication.VerifyEmail
 	LogoutUser             *userApplication.LogoutUser
-	RecoverPassword        *userApplication.PasswordRecovery
+	ResetPassword        *userApplication.PasswordReset
 	DeleteUser             *userApplication.DeleteUser
 	RecoverAccount         *userApplication.RecoverAccount
 	RefreshToken           *userApplication.RefreshToken

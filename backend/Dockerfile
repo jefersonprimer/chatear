@@ -23,7 +23,7 @@ RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o bin/chatear-api ./cmd/api && \
     CGO_ENABLED=0 go build -ldflags="-s -w" -o bin/user_hard_delete_worker ./cmd/worker/user_hard_delete_worker.go && \
     CGO_ENABLED=0 go build -ldflags="-s -w" -o bin/user_permanent_deletion_scheduler_worker ./cmd/worker/user_permanent_deletion_scheduler_worker.go && \
     CGO_ENABLED=0 go build -ldflags="-s -w" -o bin/user_registered_worker ./cmd/worker/user_registered_worker.go && \
-    CGO_ENABLED=0 go build -ldflags="-s -w" -o bin/password_recovery_worker ./cmd/worker/password_recovery_worker.go
+    CGO_ENABLED=0 go build -ldflags="-s -w" -o bin/password_reset_worker ./cmd/worker/password_reset_worker.go
 
 # ===============================
 # Stage 2: Production

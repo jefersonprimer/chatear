@@ -4,7 +4,7 @@ import "time"
 
 const (
 	UserRegisteredSubject          = "user.registered"
-	PasswordRecoveryRequestedSubject = "password.recovery.requested"
+	PasswordResetRequestedSubject = "password.reset.requested"
 	AccountDeletionRequestedSubject  = "account.deletion.requested"
 )
 
@@ -17,14 +17,14 @@ type UserRegisteredEvent struct {
 	Name              string    `json:"name"`
 }
 
-// PasswordRecoveryRequestedEvent is published when a user requests password recovery
-type PasswordRecoveryRequestedEvent struct {
+// PasswordResetRequestedEvent is published when a user requests password reset
+type PasswordResetRequestedEvent struct {
 	UserID            string    `json:"userID"`
 	Email             string    `json:"email"`
 	Name              string    `json:"name"`
 	VerificationToken string    `json:"verificationToken"`
 	Timestamp         time.Time `json:"timestamp"`
-	AppURL            string    `json:"appURL"`
+	FrontendURL       string    `json:"frontendURL"`
 }
 
 // AccountDeletionRequestedEvent is published when a user requests account deletion
@@ -34,6 +34,6 @@ type AccountDeletionRequestedEvent struct {
 	Name              string    `json:"name"`
 	RecoveryToken     string    `json:"recoveryToken"`
 	Timestamp         time.Time `json:"timestamp"`
-	AppURL            string    `json:"appURL"`
+	FrontendURL       string    `json:"frontendURL"`
 }
 

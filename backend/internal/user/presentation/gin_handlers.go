@@ -19,7 +19,7 @@ type UserHandler struct {
 	Login                       *application.Login
 	VerifyEmail                 *application.VerifyEmail
 	LogoutUser                  *application.LogoutUser
-	PasswordRecovery            *application.PasswordRecovery
+	PasswordReset            *application.PasswordReset
 	VerifyTokenAndResetPassword *application.VerifyTokenAndResetPassword
 	RecoverAccount              *application.RecoverAccount
 	DeleteUser                  *application.DeleteUser
@@ -37,7 +37,7 @@ func NewUserHandlers(
 	login *application.Login,
 	verifyEmail *application.VerifyEmail,
 	logoutUser *application.LogoutUser,
-	passwordRecovery *application.PasswordRecovery,
+	passwordReset *application.PasswordReset,
 	verifyTokenAndResetPassword *application.VerifyTokenAndResetPassword,
 	recoverAccount *application.RecoverAccount,
 	deleteUser *application.DeleteUser,
@@ -52,7 +52,7 @@ func NewUserHandlers(
 		Login:                       login,
 		VerifyEmail:                 verifyEmail,
 		LogoutUser:                  logoutUser,
-		PasswordRecovery:            passwordRecovery,
+		PasswordReset:            passwordReset,
 		VerifyTokenAndResetPassword: verifyTokenAndResetPassword,
 		RecoverAccount:              recoverAccount,
 		DeleteUser:                  deleteUser,
@@ -67,8 +67,8 @@ func NewUserHandlers(
 	router.POST("/register", handler.Register)
 	router.POST("/login", handler.LoginHandler)
 	router.GET("/verify-email", handler.VerifyEmailHandler)
-	router.POST("/password-recovery", handler.RecoverPasswordHandler)
-	router.GET("/recover-account", handler.RecoverAccountFormHandler) // Serves the password reset form
+	router.POST("/request-password-reset", handler.ResetPasswordHandler)
+	router.GET("/password-reset-token", handler.HandlePasswordResetTokenRedirect) // Handles password reset token validation and redirect
 	router.POST("/reset-password-confirm", handler.ResetPasswordConfirmHandler)
 	router.POST("/recover-account", handler.RecoverAccountHandler)
 	router.POST("/refresh-token", handler.RefreshTokenHandler)
@@ -118,11 +118,11 @@ func (h *UserHandler) ResetPasswordConfirmHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Password reset successfully"})
 }
 
-// RecoverAccountFormHandler handles the GET request for the account recovery form.
-func (h *UserHandler) RecoverAccountFormHandler(c *gin.Context) {
+// HandlePasswordResetTokenRedirect handles the GET request for password reset token validation and redirection.
+func (h *UserHandler) HandlePasswordResetTokenRedirect(c *gin.Context) {
 	token := c.Query("token")
 	if token == "" {
-		errorURL := fmt.Sprintf("%s/auth/recover-account?error=token_missing", h.FrontendURL)
+		errorURL := fmt.Sprintf("%s/auth/reset-password?error=token_missing", h.FrontendURL)
 		c.Redirect(http.StatusFound, errorURL)
 		return
 	}
@@ -130,13 +130,13 @@ func (h *UserHandler) RecoverAccountFormHandler(c *gin.Context) {
 	// Validate the token
 	_, err := h.OneTimeTokenService.PeekToken(c.Request.Context(), token)
 	if err != nil {
-		errorURL := fmt.Sprintf("%s/auth/recover-account?error=invalid_token", h.FrontendURL)
+		errorURL := fmt.Sprintf("%s/auth/reset-password?error=invalid_token", h.FrontendURL)
 		c.Redirect(http.StatusFound, errorURL)
 		return
 	}
 
 	// Redirect to the frontend password reset page
-	resetPasswordURL := fmt.Sprintf("%s/auth/recover-account?token=%s", h.FrontendURL, token)
+	resetPasswordURL := fmt.Sprintf("%s/auth/reset-password?token=%s", h.FrontendURL, token)
 	c.Redirect(http.StatusFound, resetPasswordURL)
 }
 
@@ -228,29 +228,29 @@ func (h *UserHandler) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
 }
 
-// RecoverPasswordHandler handles password recovery requests.
-func (h *UserHandler) RecoverPasswordHandler(c *gin.Context) {
-	var req application.PasswordRecoveryRequest
+// ResetPasswordHandler handles password reset requests.
+func (h *UserHandler) ResetPasswordHandler(c *gin.Context) {
+	var req application.PasswordResetRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	err := h.PasswordRecovery.Execute(c.Request.Context(), req)
+	err := h.PasswordReset.Execute(c.Request.Context(), req)
 	if err != nil {
 		if errors.Is(err, appErrors.ErrUserNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return	
 		}
 		if errors.Is(err, appErrors.ErrTooManyEmailAttempts) {
-			c.JSON(http.StatusTooManyRequests, gin.H{"error": "Too many password recovery attempts, please try again later"})
+			c.JSON(http.StatusTooManyRequests, gin.H{"error": "Too many password reset attempts, please try again later"})
 			return
 		}
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send password recovery email"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send password reset email"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Password recovery email sent if user exists"})
+	c.JSON(http.StatusOK, gin.H{"message": "Password reset email sent if user exists"})
 }
 
 // DeleteAccount handles user account deletion requests.

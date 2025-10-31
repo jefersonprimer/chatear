@@ -12,13 +12,13 @@ import (
 	"github.com/jefersonprimer/chatear/backend/shared/errors"
 )
 
-// PasswordRecoveryRequest represents the request to recover a user's password.
-type PasswordRecoveryRequest struct {
+// PasswordResetRequest represents the request to reset a user's password.
+type PasswordResetRequest struct {
 	Email string
 }
 
-// PasswordRecovery is a use case for recovering a user's password.
-type PasswordRecovery struct {
+// PasswordReset is a use case for resetting a user's password.
+type PasswordReset struct {
 	UserRepository      repositories.UserRepository
 	OneTimeTokenService services.OneTimeTokenService
 	EventBus            repositories.EventBus
@@ -26,9 +26,9 @@ type PasswordRecovery struct {
 	AppURL              string
 }
 
-// NewPasswordRecovery creates a new PasswordRecovery use case.
-func NewPasswordRecovery(userRepository repositories.UserRepository, oneTimeTokenService services.OneTimeTokenService, eventBus repositories.EventBus, emailLimiter notificationApp.RateLimiter, appURL string) *PasswordRecovery {
-	return &PasswordRecovery{
+// NewPasswordReset creates a new PasswordReset use case.
+func NewPasswordReset(userRepository repositories.UserRepository, oneTimeTokenService services.OneTimeTokenService, eventBus repositories.EventBus, emailLimiter notificationApp.RateLimiter, appURL string) *PasswordReset {
+	return &PasswordReset{
 		UserRepository:      userRepository,
 		OneTimeTokenService: oneTimeTokenService,
 		EventBus:            eventBus,
@@ -37,8 +37,8 @@ func NewPasswordRecovery(userRepository repositories.UserRepository, oneTimeToke
 	}
 }
 
-// Execute sends a password recovery email to the user.
-func (uc *PasswordRecovery) Execute(ctx context.Context, req PasswordRecoveryRequest) error {
+// Execute sends a password reset email to the user.
+func (uc *PasswordReset) Execute(ctx context.Context, req PasswordResetRequest) error {
 	isAllowed, err := uc.EmailLimiter.IsAllowed(ctx, req.Email)
 	if err != nil {
 		return fmt.Errorf("failed to check email rate limit: %w", err)
@@ -62,17 +62,17 @@ func (uc *PasswordRecovery) Execute(ctx context.Context, req PasswordRecoveryReq
 		// Log or handle increment error, but proceed with sending the email
 	}
 
-	passwordRecoveryEvent := events.PasswordRecoveryRequestedEvent{
+	passwordResetEvent := events.PasswordResetRequestedEvent{
 		UserID:            user.ID.String(),
 		Email:             user.Email,
 		Name:              user.Name,
 		VerificationToken: token,
 		Timestamp:         time.Now(),
-		AppURL:            uc.AppURL,
+		FrontendURL:       uc.AppURL,
 	}
 
-	if err := uc.EventBus.Publish(ctx, events.PasswordRecoveryRequestedSubject, passwordRecoveryEvent); err != nil {
-		return fmt.Errorf("failed to publish PasswordRecoveryRequestedEvent: %w", err)
+	if err := uc.EventBus.Publish(ctx, events.PasswordResetRequestedSubject, passwordResetEvent); err != nil {
+		return fmt.Errorf("failed to publish PasswordResetRequestedEvent: %w", err)
 	}
 
 	return nil

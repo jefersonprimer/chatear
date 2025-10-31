@@ -85,13 +85,13 @@ func (r *mutationResolver) Logout(ctx context.Context) (bool, error) {
 	return true, nil
 }
 
-// RecoverPassword is the resolver for the recoverPassword field.
-func (r *mutationResolver) RecoverPassword(ctx context.Context, input model.RecoverPasswordInput) (bool, error) {
-	recoverReq := application.PasswordRecoveryRequest{
+// ResetPassword is the resolver for the resetPassword field.
+func (r *mutationResolver) ResetPassword(ctx context.Context, input model.ResetPasswordInput) (bool, error) {
+	resetReq := application.PasswordResetRequest{
 		Email: input.Email,
 	}
 
-	err := r.Resolver.RecoverPassword.Execute(ctx, recoverReq)
+	err := r.Resolver.ResetPassword.Execute(ctx, resetReq)
 	if err != nil {
 		return false, err
 	}

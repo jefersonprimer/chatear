@@ -53,8 +53,8 @@ func SetupServer(cfg *config.Config) (*gin.Engine, error) {
 		loginUseCase := userApp.NewLogin(userRepo, tokenService, refreshTokenRepo)
 		verifyEmailUseCase := userApp.NewVerifyEmail(userRepo, oneTimeTokenService)
 		logoutUser := userApp.NewLogoutUser(refreshTokenRepo, blacklistRepo, tokenService)
-		passwordRecovery := userApp.NewPasswordRecovery(userRepo, oneTimeTokenService, eventBus, emailLimiter, cfg.AppURL)
-		deleteUser := userApp.NewDeleteUser(userRepo, oneTimeTokenService, eventBus, userDeletionRepo, cfg.AppURL)
+		passwordReset := userApp.NewPasswordReset(userRepo, oneTimeTokenService, eventBus, emailLimiter, cfg.FrontendURL)
+		deleteUser := userApp.NewDeleteUser(userRepo, oneTimeTokenService, eventBus, userDeletionRepo, cfg.FrontendURL)
 		recoverAccount := userApp.NewRecoverAccount(userRepo, nil, oneTimeTokenService)
 		refreshToken := userApp.NewRefreshToken(refreshTokenRepo, tokenService, userRepo)
 		getUsersUseCase := usecases.NewUserUseCases(userRepo)
@@ -89,7 +89,7 @@ func SetupServer(cfg *config.Config) (*gin.Engine, error) {
 			loginUseCase,
 			verifyEmailUseCase,
 			logoutUser,
-			passwordRecovery,
+			passwordReset,
 			verifyTokenAndResetPasswordUseCase,
 			recoverAccount,
 			deleteUser,
@@ -113,7 +113,7 @@ func SetupServer(cfg *config.Config) (*gin.Engine, error) {
 					LoginUseCase:        loginUseCase,
 					VerifyEmailUseCase:  verifyEmailUseCase,
 					LogoutUser:          logoutUser,
-					RecoverPassword:     passwordRecovery,
+					ResetPassword:     passwordReset,
 					DeleteUser:          deleteUser,
 					RecoverAccount:      recoverAccount,
 					RefreshToken:        refreshToken,

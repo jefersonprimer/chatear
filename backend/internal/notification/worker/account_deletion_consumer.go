@@ -31,7 +31,7 @@ func (c *AccountDeletionConsumer) Consume(ctx context.Context, msg *nats.Msg) {
 		return
 	}
 
-	recoveryLink := fmt.Sprintf("%s/recover-account?token=%s", event.AppURL, event.RecoveryToken)
+	recoveryLink := fmt.Sprintf("%s/recover-account?token=%s", event.FrontendURL, event.RecoveryToken)
 
 	if err := c.emailService.SendMagicLinkEmail(ctx, event.Email, event.UserID, "Account Deletion Confirmation and Recovery", recoveryLink); err != nil {
 		log.Printf("Error sending account deletion recovery email for user %s: %v", event.UserID, err)

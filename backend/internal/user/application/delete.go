@@ -81,7 +81,7 @@ func (uc *DeleteUser) Execute(ctx context.Context, req DeleteUserRequest) error 
 		Name:              user.Name,
 		RecoveryToken:     recoveryToken,
 		Timestamp:         time.Now(),
-		AppURL:            uc.AppURL,
+		FrontendURL:       uc.AppURL,
 	}
 
 	if err := uc.EventBus.Publish(ctx, events.AccountDeletionRequestedSubject, accountDeletionEvent); err != nil {

@@ -15,9 +15,9 @@ export const LOGIN_MUTATION = gql`
 `;
 
 
-export const RECOVER_PASSWORD_MUTATION = gql`
-  mutation RecoverPassword($input: RecoverPasswordInput!) {
-    recoverPassword(input: $input)
+export const RESET_PASSWORD_MUTATION = gql`
+  mutation ResetPassword($input: ResetPasswordInput!) {
+    resetPassword(input: $input)
   }
 `;
 
